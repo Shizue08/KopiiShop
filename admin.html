@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - KopiiShop</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <nav class="nav-container">
+            <a href="index.html" class="logo">Kopii<span>Shop</span></a>
+            
+            <button class="mobile-menu-btn">☰</button>
+            
+            <ul class="nav-menu">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="menu.html" class="nav-link">Menu</a></li>
+                <li><a href="cart.html" class="nav-link">Cart (<span id="cart-count">0</span>)</a></li>
+                <li><a href="user.html" class="nav-link">Profile</a></li>
+                <li><a href="admin.html" class="nav-link active">Admin</a></li>
+                <div class="auth-buttons">
+                    <button class="btn btn-secondary btn-login">Login</button>
+                    <button class="btn btn-primary btn-register">Register</button>
+                </div>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Admin Dashboard -->
+    <section class="main-content">
+        <!-- Admin Login Form (shown when not logged in as admin) -->
+        <div id="adminLogin" class="card">
+            <div class="card-header">
+                <h2 class="card-title">Admin Login</h2>
+            </div>
+            <form id="adminLoginForm">
+                <div class="form-group">
+                    <label for="adminEmail" class="form-label">Admin Email</label>
+                    <input type="email" id="adminEmail" class="form-input" value="admin@example.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="adminPassword" class="form-label">Password</label>
+                    <input type="password" id="adminPassword" class="form-input" value="admin123" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Login as Admin</button>
+            </form>
+            <p class="mt-2">Default admin credentials: admin@example.com / admin123</p>
+        </div>
+
+        <!-- Admin Dashboard (shown when logged in as admin) -->
+        <div id="adminDashboard" style="display: none;">
+            <!-- Dashboard Stats -->
+            <div class="dashboard-grid">
+                <div class="dashboard-card">
+                    <div class="dashboard-icon">💰</div>
+                    <div class="dashboard-number" id="totalSales">$0</div>
+                    <div class="dashboard-label">Total Sales</div>
+                </div>
+                <div class="dashboard-card">
+                    <div class="dashboard-icon">📦</div>
+                    <div class="dashboard-number" id="totalOrders">0</div>
+                    <div class="dashboard-label">Total Orders</div>
+                </div>
+                <div class="dashboard-card">
+                    <div class="dashboard-icon">☕</div>
+                    <div class="dashboard-number" id="totalProducts">0</div>
+                    <div class="dashboard-label">Total Products</div>
+                </div>
+                <div class="dashboard-card">
+                    <div class="dashboard-icon">👥</div>
+                    <div class="dashboard-number" id="totalCustomers">0</div>
+                    <div class="dashboard-label">Total Customers</div>
+                </div>
+            </div>
+
+            <!-- Product Management -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Product Management</h2>
+                </div>
+                <form id="addProductForm">
+                    <div class="form-group">
+                        <label for="productName" class="form-label">Product Name</label>
+                        <input type="text" id="productName" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="productPrice" class="form-label">Price</label>
+                        <input type="number" id="productPrice" class="form-input" step="0.01" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="productCategory" class="form-label">Category</label>
+                        <select id="productCategory" class="form-select" required>
+                            <option value="">Select Category</option>
+                            <option value="coffee">Coffee</option>
+                            <option value="tea">Tea</option>
+                            <option value="bakery">Bakery</option>
+                            <option value="specialty">Specialty Drinks</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="productDescription" class="form-label">Description</label>
+                        <textarea id="productDescription" class="form-textarea"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Product</button>
+                </form>
+
+                <div class="table-container mt-2">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Price</th>
+                                <th>Category</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productTable">
+                            <!-- Products will be loaded here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Order Management -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Order Management</h2>
+                </div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Customer</th>
+                                <th>Date</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="orderTable">
+                            <!-- Orders will be loaded here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Authentication Modals -->
+    <div id="loginModal" class="modal-overlay">
+        <div class="auth-container">
+            <button class="close-btn">&times;</button>
+            <div class="login-form active">
+                <h2>Login to Your Account</h2>
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="loginEmail" class="form-label">Email</label>
+                        <input type="email" id="loginEmail" class="form-input" placeholder="Enter your email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword" class="form-label">Password</label>
+                        <input type="password" id="loginPassword" class="form-input" placeholder="Enter your password" required>
+                    </div>
+                    <div class="form-options">
+                        <label>
+                            <input type="checkbox"> Remember me
+                        </label>
+                        <a href="#">Forgot password?</a>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Login</button>
+                </form>
+                <p>Don't have an account? <a href="#" id="switchToRegister">Register here</a></p>
+            </div>
+        </div>
+    </div>
+
+    <div id="registerModal" class="modal-overlay">
+        <div class="auth-container">
+            <button class="close-btn">&times;</button>
+            <div class="register-form">
+                <h2>Create New Account</h2>
+                <form id="registerForm">
+                    <div class="form-group">
+                        <label for="registerUsername" class="form-label">Username</label>
+                        <input type="text" id="registerUsername" class="form-input" placeholder="Choose a username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="registerEmail" class="form-label">Email</label>
+                        <input type="email" id="registerEmail" class="form-input" placeholder="Enter your email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="registerPassword" class="form-label">Password</label>
+                        <input type="password" id="registerPassword" class="form-input" placeholder="Create a password" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="registerConfirmPassword" class="form-label">Confirm Password</label>
+                        <input type="password" id="registerConfirmPassword" class="form-input" placeholder="Confirm your password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">Register</button>
+                </form>
+                <p>Already have an account? <a href="#" id="switchToLogin">Login here</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
