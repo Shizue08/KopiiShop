@@ -138,6 +138,24 @@ class CoffeeShopApp {
         localStorage.setItem("products", JSON.stringify(this.products));
     }
 
+    // Fixed method to generate unique product IDs - finds the next available number
+    getNextProductId() {
+        if (this.products.length === 0) return 1;
+        
+        // Get all existing IDs and sort them
+        const existingIds = this.products.map(p => p.id).sort((a, b) => a - b);
+        
+        // Find the first missing number in the sequence
+        for (let i = 0; i < existingIds.length; i++) {
+            if (existingIds[i] !== i + 1) {
+                return i + 1;
+            }
+        }
+        
+        // If no gaps found, return the next number after the highest
+        return existingIds[existingIds.length - 1] + 1;
+    }
+
     // Cart Management
     getCart() {
         return JSON.parse(localStorage.getItem("cart")) || [];
@@ -243,7 +261,11 @@ class CoffeeShopApp {
         if (!container) return;
 
         container.innerHTML = '';
-        this.products.forEach(product => {
+        
+        // Sort products by ID to ensure ID 1 is at the top
+        const sortedProducts = [...this.products].sort((a, b) => a.id - b.id);
+        
+        sortedProducts.forEach(product => {
             const productElement = document.createElement("div");
             productElement.classList.add("menu-item");
             productElement.innerHTML = `
@@ -471,7 +493,7 @@ class CoffeeShopApp {
     // Admin Methods
     checkAdminAccess() {
         const currentUser = this.getCurrentUser();
-        const isAdmin = currentUser && currentUser.email === 'admin@example.com';
+        const isAdmin = currentUser && currentUser.email === 'Hiro02@gmail.com';
         
         const adminLogin = document.getElementById('adminLogin');
         const adminDashboard = document.getElementById('adminDashboard');
@@ -512,7 +534,13 @@ class CoffeeShopApp {
         const tbody = document.getElementById('productTable');
         if (!tbody) return;
         
-        tbody.innerHTML = this.products.map(product => `
+        // Reset form to add mode when loading products
+        this.resetProductForm();
+        
+        // Sort products by ID to ensure ID 1 is at the top
+        const sortedProducts = [...this.products].sort((a, b) => a.id - b.id);
+        
+        tbody.innerHTML = sortedProducts.map(product => `
             <tr>
                 <td>${product.id}</td>
                 <td>${product.name}</td>
@@ -531,9 +559,9 @@ class CoffeeShopApp {
         if (!tbody) return;
         
         const orders = [
-            { id: 'ORD-001', customer: 'John Doe', date: '2024-01-15', total: '$38.97', status: 'Delivered' },
-            { id: 'ORD-002', customer: 'Jane Smith', date: '2024-01-14', total: '$22.99', status: 'Processing' },
-            { id: 'ORD-003', customer: 'Bob Johnson', date: '2024-01-13', total: '$64.95', status: 'Pending' }
+            { id: 'ORD-001', customer: 'Marky Santiago', date: '2024-01-15', total: '$38.97', status: 'Delivered' },
+            { id: 'ORD-002', customer: 'Goku Nicker', date: '2024-01-14', total: '$22.99', status: 'Processing' },
+            { id: 'ORD-003', customer: 'Jireh Suckerberg', date: '2024-01-13', total: '$64.95', status: 'Pending' }
         ];
         
         tbody.innerHTML = orders.map(order => `
@@ -554,6 +582,192 @@ class CoffeeShopApp {
                 </td>
             </tr>
         `).join('');
+    }
+
+    // Product Management Methods - FIXED VERSION
+    addProduct() {
+        const name = document.getElementById('productName').value;
+        const price = parseFloat(document.getElementById('productPrice').value);
+        const category = document.getElementById('productCategory').value;
+        const description = document.getElementById('productDescription').value;
+
+        if (!name || !price || !category) {
+            this.showErrorMessage('Please fill in all required fields');
+            return;
+        }
+
+        const newProduct = {
+            id: this.getNextProductId(),
+            name,
+            price,
+            category,
+            description,
+            image: 'https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=400&h=300&fit=crop'
+        };
+
+        this.products.push(newProduct);
+        this.saveProducts();
+        this.loadProductManagement();
+        document.getElementById('addProductForm').reset();
+        this.showSuccessMessage('Product added successfully!');
+    }
+
+    editProduct(productId) {
+    const product = this.products.find(p => p.id === productId);
+    if (product) {
+        // Fill form with product data
+        document.getElementById('productName').value = product.name;
+        document.getElementById('productPrice').value = product.price;
+        document.getElementById('productCategory').value = product.category;
+        document.getElementById('productDescription').value = product.description || '';
+        
+        // Change form to update mode
+        const form = document.getElementById('addProductForm');
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.textContent = 'Update Product';
+        
+        // Store the product ID being edited in a data attribute
+        form.setAttribute('data-editing-id', productId);
+        
+        // Remove the 'required' attribute to prevent browser validation popup
+        form.querySelectorAll('[required]').forEach(field => {
+            field.removeAttribute('required');
+        });
+        
+        // Remove any existing event listeners and add the update handler
+        const newForm = form.cloneNode(true);
+        form.parentNode.replaceChild(newForm, form);
+        
+        // Re-attach event listener to the new form
+        newForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            this.updateProduct(productId);
+        });
+        
+        // Update the form reference
+        document.getElementById('addProductForm').onsubmit = (e) => {
+            e.preventDefault();
+            this.updateProduct(productId);
+        };
+    }
+}
+
+    updateProduct(productId) {
+    const name = document.getElementById('productName').value;
+    const price = parseFloat(document.getElementById('productPrice').value);
+    const category = document.getElementById('productCategory').value;
+    const description = document.getElementById('productDescription').value;
+
+    // Add custom validation
+    if (!name.trim() || !price || !category) {
+        this.showErrorMessage('Please fill in all required fields (Name, Price, and Category)');
+        return;
+    }
+
+    const productIndex = this.products.findIndex(p => p.id === productId);
+    if (productIndex !== -1) {
+        // Update the existing product instead of creating a new one
+        this.products[productIndex] = {
+            ...this.products[productIndex],
+            name,
+            price,
+            category,
+            description
+        };
+        
+        this.saveProducts();
+        this.loadProductManagement();
+        
+        // Show success message BEFORE resetting the form
+        this.showSuccessMessage('Product updated successfully!');
+        
+        // Reset form after showing the message
+        setTimeout(() => {
+            this.resetProductForm();
+        }, 100);
+    }
+}
+
+    // Helper method to reset the product form to add mode
+    resetProductForm() {
+    const form = document.getElementById('addProductForm');
+    if (!form) return;
+    
+    const submitBtn = form.querySelector('button[type="submit"]');
+    
+    form.reset();
+    form.removeAttribute('data-editing-id');
+    if (submitBtn) submitBtn.textContent = 'Add Product';
+    
+    // Restore required attributes for add mode
+    const requiredFields = form.querySelectorAll('#productName, #productPrice, #productCategory');
+    requiredFields.forEach(field => {
+        field.setAttribute('required', 'required');
+    });
+    
+    // Reset form handler back to add product
+    form.onsubmit = (e) => {
+        e.preventDefault();
+        this.addProduct();
+    };
+}
+
+    deleteProduct(productId) {
+        if (confirm('Are you sure you want to delete this product?')) {
+            this.products = this.products.filter(p => p.id !== productId);
+            this.saveProducts();
+            this.loadProductManagement();
+            
+            // If we were editing the deleted product, reset the form
+            const form = document.getElementById('addProductForm');
+            const editingId = form.getAttribute('data-editing-id');
+            if (editingId && parseInt(editingId) === productId) {
+                this.resetProductForm();
+            }
+            
+            this.showSuccessMessage('Product deleted successfully!');
+        }
+    }
+
+    updateOrderStatus(orderId, status) {
+        this.showSuccessMessage(`Order ${orderId} status updated to ${status}`);
+    }
+
+    // Profile Methods
+    updateProfile() {
+        const username = document.getElementById('updateUsername').value;
+        const email = document.getElementById('updateEmail').value;
+        const currentPassword = document.getElementById('currentPassword').value;
+        const newPassword = document.getElementById('newPassword').value;
+
+        if (!username || !email) {
+            this.showErrorMessage('Please fill in all required fields');
+            return;
+        }
+
+        const users = JSON.parse(localStorage.getItem('users')) || [];
+        const userIndex = users.findIndex(u => u.email === this.currentUser.email);
+        
+        if (userIndex !== -1) {
+            users[userIndex].username = username;
+            users[userIndex].email = email;
+            
+            if (newPassword) {
+                if (!currentPassword) {
+                    this.showErrorMessage('Please enter current password to change password');
+                    return;
+                }
+                if (users[userIndex].password !== currentPassword) {
+                    this.showErrorMessage('Current password is incorrect');
+                    return;
+                }
+                users[userIndex].password = newPassword;
+            }
+            
+            localStorage.setItem('users', JSON.stringify(users));
+            this.saveUser(users[userIndex]);
+            this.showSuccessMessage('Profile updated successfully!');
+        }
     }
 
     // Event Listeners
@@ -839,145 +1053,13 @@ class CoffeeShopApp {
         const email = document.getElementById('adminEmail').value;
         const password = document.getElementById('adminPassword').value;
 
-        if (email === 'admin@example.com' && password === 'admin123') {
-            const adminUser = { username: 'Admin', email: 'admin@example.com', role: 'admin' };
+        if (email === 'Hiro02@gmail.com' && password === 'Hiro02') {
+            const adminUser = { username: 'Admin', email: 'Hiro02@gmail.com', role: 'admin' };
             this.saveUser(adminUser);
             this.showSuccessMessage('Admin login successful!');
             window.location.reload();
         } else {
             this.showErrorMessage('Invalid admin credentials');
-        }
-    }
-
-    // Product Management Methods
-    addProduct() {
-        const name = document.getElementById('productName').value;
-        const price = parseFloat(document.getElementById('productPrice').value);
-        const category = document.getElementById('productCategory').value;
-        const description = document.getElementById('productDescription').value;
-
-        if (!name || !price || !category) {
-            this.showErrorMessage('Please fill in all required fields');
-            return;
-        }
-
-        const newProduct = {
-            id: Date.now(),
-            name,
-            price,
-            category,
-            description,
-            image: 'https://images.unsplash.com/photo-1559056199-641a0ac8b55e?w=400&h=300&fit=crop'
-        };
-
-        this.products.push(newProduct);
-        this.saveProducts();
-        this.loadProductManagement();
-        document.getElementById('addProductForm').reset();
-        this.showSuccessMessage('Product added successfully!');
-    }
-
-    editProduct(productId) {
-        const product = this.products.find(p => p.id === productId);
-        if (product) {
-            document.getElementById('productName').value = product.name;
-            document.getElementById('productPrice').value = product.price;
-            document.getElementById('productCategory').value = product.category;
-            document.getElementById('productDescription').value = product.description;
-            
-            // Change form to update mode
-            const form = document.getElementById('addProductForm');
-            const submitBtn = form.querySelector('button[type="submit"]');
-            submitBtn.textContent = 'Update Product';
-            
-            form.onsubmit = (e) => {
-                e.preventDefault();
-                this.updateProduct(productId);
-            };
-        }
-    }
-
-    updateProduct(productId) {
-        const name = document.getElementById('productName').value;
-        const price = parseFloat(document.getElementById('productPrice').value);
-        const category = document.getElementById('productCategory').value;
-        const description = document.getElementById('productDescription').value;
-
-        const productIndex = this.products.findIndex(p => p.id === productId);
-        if (productIndex !== -1) {
-            this.products[productIndex] = {
-                ...this.products[productIndex],
-                name,
-                price,
-                category,
-                description
-            };
-            
-            this.saveProducts();
-            this.loadProductManagement();
-            
-            // Reset form to add mode
-            const form = document.getElementById('addProductForm');
-            const submitBtn = form.querySelector('button[type="submit"]');
-            submitBtn.textContent = 'Add Product';
-            
-            form.reset();
-            form.onsubmit = (e) => {
-                e.preventDefault();
-                this.addProduct();
-            };
-            
-            this.showSuccessMessage('Product updated successfully!');
-        }
-    }
-
-    deleteProduct(productId) {
-        if (confirm('Are you sure you want to delete this product?')) {
-            this.products = this.products.filter(p => p.id !== productId);
-            this.saveProducts();
-            this.loadProductManagement();
-            this.showSuccessMessage('Product deleted successfully!');
-        }
-    }
-
-    updateOrderStatus(orderId, status) {
-        this.showSuccessMessage(`Order ${orderId} status updated to ${status}`);
-    }
-
-    // Profile Methods
-    updateProfile() {
-        const username = document.getElementById('updateUsername').value;
-        const email = document.getElementById('updateEmail').value;
-        const currentPassword = document.getElementById('currentPassword').value;
-        const newPassword = document.getElementById('newPassword').value;
-
-        if (!username || !email) {
-            this.showErrorMessage('Please fill in all required fields');
-            return;
-        }
-
-        const users = JSON.parse(localStorage.getItem('users')) || [];
-        const userIndex = users.findIndex(u => u.email === this.currentUser.email);
-        
-        if (userIndex !== -1) {
-            users[userIndex].username = username;
-            users[userIndex].email = email;
-            
-            if (newPassword) {
-                if (!currentPassword) {
-                    this.showErrorMessage('Please enter current password to change password');
-                    return;
-                }
-                if (users[userIndex].password !== currentPassword) {
-                    this.showErrorMessage('Current password is incorrect');
-                    return;
-                }
-                users[userIndex].password = newPassword;
-            }
-            
-            localStorage.setItem('users', JSON.stringify(users));
-            this.saveUser(users[userIndex]);
-            this.showSuccessMessage('Profile updated successfully!');
         }
     }
 
